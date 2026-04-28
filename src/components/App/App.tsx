@@ -20,7 +20,7 @@ function App() {
 
   const queryClient = useQueryClient();
 
-  const { data } = useQuery({
+  const { data, isLoading, isFetching, error, isError } = useQuery({
     queryKey: ["notes", query, page],
     queryFn: () => {
       return fetchNotes(query, page);
@@ -36,6 +36,7 @@ function App() {
     },
   });
 
+  // Delete Note
   const { mutate: onNoteDelete } = useMutation({
     mutationFn: (id: string) => deleteNote(id),
     onSuccess: () => {
@@ -72,7 +73,8 @@ function App() {
   };
 
   const hasNotes = data && data?.notes.length > 0;
-  const totalPages = data ? data?.totalPages : 1;
+  const showPagination = data && data.totalPages > 1;
+  const totalPages = data ? data.totalPages : 1;
 
   return (
     <div className={css.app}>
@@ -85,15 +87,19 @@ function App() {
           placeholder="Search notes"
         />
 
-        <Pagination
-          totalPages={totalPages}
-          onPageChange={handlePageChange}
-          currentPage={page}
-        />
+        {showPagination && (
+          <Pagination
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+            currentPage={page}
+          />
+        )}
         <button onClick={handleModalOpen} className={css.button}>
           Create note +
         </button>
       </header>
+      {isLoading && <p>Loading...</p>}
+      {isError && <p>An error occurred: {error.message}</p>}
       {hasNotes && <NoteList notes={data?.notes} onDelete={handleDeleteNote} />}
       {isModalOpen && (
         <Modal onSubmit={handleCreateNote} onClose={handleModalClose} />
