@@ -1,5 +1,5 @@
 import axios from "axios";
-import type { Note } from "../types/note";
+import type { NewNote, Note } from "../types/note";
 
 const token = import.meta.env.VITE_NOTEHUB_TOKEN;
 const api = axios.create({
@@ -12,12 +12,11 @@ interface ApiResponse {
   totalPages: number;
 }
 
+// Fetch all notes
 export const fetchNotes = async (
   query: string,
   page: number,
 ): Promise<ApiResponse> => {
-  console.log(token);
-
   try {
     const { data } = await api.get<ApiResponse>("/notes", {
       params: {
@@ -28,10 +27,34 @@ export const fetchNotes = async (
 
     return data;
   } catch (error) {
-    throw new Error("Something went wrong !", error as ErrorOptions);
+    throw new Error(
+      "Something went wrong by fetching notes!",
+      error as ErrorOptions,
+    );
   }
 };
 
-export const createNote = async () => {};
+// Create new note
+export const createNote = async (data: NewNote): Promise<Note> => {
+  try {
+    const res = await api.post<Note>("/notes", data);
+    return res.data;
+  } catch (error) {
+    throw new Error(
+      "Something went wrong by creating new note!",
+      error as ErrorOptions,
+    );
+  }
+};
 
-export const deleteNote = async () => {};
+// Delete note by id
+export const deleteNote = async (id: string) => {
+  try {
+    await api.delete(`/notes/${id}`);
+  } catch (error) {
+    throw new Error(
+      "Something went wrong by creating new note!",
+      error as ErrorOptions,
+    );
+  }
+};
