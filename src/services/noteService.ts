@@ -27,10 +27,9 @@ export const fetchNotes = async (
 
     return data;
   } catch (error) {
-    throw new Error(
-      "Something went wrong by fetching notes!",
-      error as ErrorOptions,
-    );
+    throw new Error("Something went wrong by fetching notes!", {
+      cause: error,
+    });
   }
 };
 
@@ -40,21 +39,20 @@ export const createNote = async (data: NewNote): Promise<Note> => {
     const res = await api.post<Note>("/notes", data);
     return res.data;
   } catch (error) {
-    throw new Error(
-      "Something went wrong by creating new note!",
-      error as ErrorOptions,
-    );
+    throw new Error("Something went wrong by creating new note!", {
+      cause: error,
+    });
   }
 };
 
 // Delete note by id
-export const deleteNote = async (id: string) => {
+export const deleteNote = async (id: string): Promise<Note> => {
   try {
-    await api.delete(`/notes/${id}`);
+    const res = await api.delete<Note>(`/notes/${id}`);
+    return res.data;
   } catch (error) {
-    throw new Error(
-      "Something went wrong by creating new note!",
-      error as ErrorOptions,
-    );
+    throw new Error("Something went wrong by deleting note!", {
+      cause: error,
+    });
   }
 };

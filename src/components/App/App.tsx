@@ -1,24 +1,18 @@
 import { useState } from "react";
 import css from "./App.module.css";
-import { createNote, deleteNote, fetchNotes } from "../../services/noteService";
-import {
-  keepPreviousData,
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { fetchNotes } from "../../services/noteService";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import NoteList from "../NoteList/NoteList";
 import Pagination from "../Pagination/Pagination";
 import { useDebouncedCallback } from "use-debounce";
 import Modal from "../Modal/Modal";
-import type { NewNote } from "../../types/note";
+import NoteForm from "../NoteForm/NoteForm";
+import SearchBox from "../SearchBox/SearchBox";
 
 function App() {
   const [query, setQuery] = useState<string>("");
   const [page, setPage] = useState<number>(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const queryClient = useQueryClient();
 
   const { data, isLoading, error, isError } = useQuery({
     queryKey: ["notes", query, page],
@@ -26,22 +20,6 @@ function App() {
       return fetchNotes(query, page);
     },
     placeholderData: keepPreviousData,
-  });
-
-  // Create Note
-  const { mutate: onNoteCreate } = useMutation({
-    mutationFn: (data: NewNote) => createNote(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notes"] });
-    },
-  });
-
-  // Delete Note
-  const { mutate: onNoteDelete } = useMutation({
-    mutationFn: (id: string) => deleteNote(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notes"] });
-    },
   });
 
   const handleModalOpen = () => {
@@ -63,15 +41,6 @@ function App() {
     setPage(nextPage);
   };
 
-  const handleCreateNote = (data: NewNote) => {
-    onNoteCreate(data);
-  };
-
-  const handleDeleteNote = (id: string) => {
-    onNoteDelete(id);
-    setPage(1);
-  };
-
   const hasNotes = data && data?.notes.length > 0;
   const showPagination = data && data.totalPages > 1;
   const totalPages = data ? data.totalPages : 1;
@@ -79,14 +48,7 @@ function App() {
   return (
     <div className={css.app}>
       <header className={css.toolbar}>
-        <input
-          defaultValue={query}
-          onChange={handleSetQuery}
-          className={css.input}
-          type="text"
-          placeholder="Search notes"
-        />
-
+        <SearchBox onChange={handleSetQuery} defaultValue={query} />
         {showPagination && (
           <Pagination
             totalPages={totalPages}
@@ -100,9 +62,11 @@ function App() {
       </header>
       {isLoading && <p>Loading...</p>}
       {isError && <p>An error occurred: {error.message}</p>}
-      {hasNotes && <NoteList notes={data?.notes} onDelete={handleDeleteNote} />}
+      {hasNotes && <NoteList notes={data?.notes} />}
       {isModalOpen && (
-        <Modal onSubmit={handleCreateNote} onClose={handleModalClose} />
+        <Modal onClose={handleModalClose}>
+          <NoteForm onClose={handleModalClose} />
+        </Modal>
       )}
     </div>
   );

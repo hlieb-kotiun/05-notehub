@@ -1,7 +1,9 @@
 import { ErrorMessage, Field, Form, Formik, type FormikHelpers } from "formik";
 import css from "./NoteForm.module.css";
-import type { NewNote } from "../../types/note";
 import * as Yup from "yup";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { createNote } from "../../services/noteService";
+import type { NewNote } from "../../types/note";
 
 interface FormValues {
   title: string;
@@ -11,10 +13,19 @@ interface FormValues {
 
 interface NoteFormProps {
   onClose: () => void;
-  onSubmit: (data: NewNote) => void;
 }
 
-const NoteForm = ({ onClose, onSubmit }: NoteFormProps) => {
+const NoteForm = ({ onClose }: NoteFormProps) => {
+  const queryClient = useQueryClient();
+
+  // Create Note
+  const { mutate } = useMutation({
+    mutationFn: (data: NewNote) => createNote(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notes"] });
+    },
+  });
+
   const initialValues = {
     title: "",
     content: "",
@@ -23,20 +34,28 @@ const NoteForm = ({ onClose, onSubmit }: NoteFormProps) => {
 
   const NoteFormSchema = Yup.object().shape({
     title: Yup.string()
-      .min(3, "Title must be at least 2 characters")
-      .max(30, "Title is too long")
+      .trim()
+      .min(3, "Title must be at least 3 characters")
+      .max(50, "Title must be at most 50 characters")
       .required("Title is required"),
-    content: Yup.string().max(30, "Content is too long"),
+
+    content: Yup.string()
+      .trim()
+      .max(500, "Content must be at most 500 characters"),
+
     tag: Yup.string()
       .required("Tag is required")
-      .oneOf(["Todo", "Work", "Personal", "Meeting", "Shopping"]),
+      .oneOf(
+        ["Todo", "Work", "Personal", "Meeting", "Shopping"],
+        "Invalid tag value",
+      ),
   });
 
   const handleSubmit = (
     values: FormValues,
     helper: FormikHelpers<FormValues>,
   ) => {
-    onSubmit({
+    mutate({
       title: values.title,
       content: values.content,
       tag: values.tag,
