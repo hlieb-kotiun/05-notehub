@@ -23,6 +23,7 @@ const NoteForm = ({ onClose }: NoteFormProps) => {
     mutationFn: (data: NewNote) => createNote(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notes"] });
+      onClose();
     },
   });
 
@@ -60,7 +61,6 @@ const NoteForm = ({ onClose }: NoteFormProps) => {
       content: values.content,
       tag: values.tag,
     });
-    onClose();
     helper.resetForm();
   };
 

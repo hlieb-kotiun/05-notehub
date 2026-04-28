@@ -33,6 +33,7 @@ function App() {
   const handleSetQuery = useDebouncedCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       setQuery(e.target.value);
+      setPage(1);
     },
     1000,
   );
